@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador - EventPro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <!-- Cargar auth.js primero, luego dashboard -->
+    <script src="js/auth.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/events.js"></script>
+    
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-calendar-alt"></i>
+                <span>EventPro</span>
+            </div>
+            <nav class="nav">
+                <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="#events" class="nav-link" data-section="events">
+                    <i class="fas fa-calendar"></i> Eventos
+                </a>
+                <a href="#analytics" class="nav-link" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                <a href="#categories" class="nav-link" data-section="categories">
+                    <i class="fas fa-tags"></i> Categorías
+                </a>
+                <a href="#profile" class="nav-link" data-section="profile">
+                    <i class="fas fa-user"></i> Perfil
+                </a>
+            </nav>
+            <div class="user-menu">
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">Administrador</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="section active">
+            <div class="dashboard-header">
+                <h1>Dashboard de Administrador</h1>
+                <p class="welcome-text">Bienvenido de vuelta, <span id="welcomeUser">Administrador</span></p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalEvents">0</h3>
+                        <p>Eventos Totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalActiveRegistrations">0</h3>
+                        <p>Inscripciones Activas</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="avgUsersPerEvent">0.0</h3>
+                        <p>Promedio Usuarios/Evento</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="topEvent">-</h3>
+                        <p>Evento Más Popular</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2>Acciones Rápidas</h2>
+                <div class="actions-grid">
+                    <button class="action-btn" id="createEventBtn">
+                        <i class="fas fa-plus"></i>
+                        <span>Crear Evento</span>
+                    </button>
+                    <button class="action-btn" onclick="switchSection('events')">
+                        <i class="fas fa-list"></i>
+                        <span>Gestionar Eventos</span>
+                    </button>
+                    <button class="action-btn" onclick="switchSection('categories')">
+                        <i class="fas fa-tags"></i>
+                        <span>Gestionar Categorías</span>
+                    </button>
+                    <button class="action-btn" onclick="switchSection('analytics')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Ver Reportes</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="events-section" class="section">
+            <div class="section-header">
+                <h1>Gestión de Eventos</h1>
+                <button class="btn-primary" id="addEventBtn">
+                    <i class="fas fa-plus"></i> Nuevo Evento
+                </button>
+            </div>
+
+            <!-- Events Filter -->
+            <div class="events-filter">
+                <div class="filter-group">
+                    <label for="filterStatus">Estado:</label>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">Todos</option>
+                        <option value="upcoming">Próximos</option>
+                        <option value="ongoing">En Curso</option>
+                        <option value="completed">Completados</option>
+                        <option value="cancelled">Cancelados</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterCategory">Categoría:</label>
+                    <select id="filterCategory" class="filter-select">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterDate">Fecha:</label>
+                    <input type="date" id="filterDate" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="searchEvents">Buscar:</label>
+                    <input type="text" id="searchEvents" placeholder="Buscar eventos..." class="filter-input">
+                </div>
+            </div>
+
+            <!-- Events Table -->
+            <div class="events-table-container">
+                <table class="events-table" id="eventsTable">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Categoría</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Lugar</th>
+                            <th>Cupos</th>
+                            <th>Inscritos</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTableBody">
+                        <!-- Los eventos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Categories Section -->
+        <section id="categories-section" class="section">
+            <div class="section-header">
+                <h1>Gestión de Categorías</h1>
+                <button class="btn-primary" id="addCategoryBtn">
+                    <i class="fas fa-plus"></i> Nueva Categoría
+                </button>
+            </div>
+
+            <div class="events-table-container">
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Eventos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesTableBody">
+                        <!-- Las categorías se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics-section" class="section">
+            <div class="section-header">
+                <h1>Analytics y Reportes</h1>
+            </div>
+            <div class="analytics-content">
+                <div class="chart-container">
+                    <h3>Eventos por Mes</h3>
+                    <canvas id="eventsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Inscripciones por Evento</h3>
+                    <canvas id="registrationsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile-section" class="section">
+            <div class="section-header">
+                <h1>Perfil de Usuario</h1>
+            </div>
+            <div class="profile-content">
+                <div class="form-group">
+                    <label for="profileName">Nombre:</label>
+                    <input type="text" id="profileName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="profileEmail">Email:</label>
+                    <input type="email" id="profileEmail" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="profileRole">Rol:</label>
+                    <input type="text" id="profileRole" class="form-input" value="Administrador" readonly>
+                </div>
+                <button class="btn-primary" id="saveProfileBtn">Guardar Cambios</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para Crear/Editar Evento -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Crear Evento</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form id="eventForm" class="modal-body">
+                <div class="form-group">
+                    <label for="eventName">Nombre del Evento:</label>
+                    <input type="text" id="eventName" name="nombre" required class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="eventDescription">Descripción:</label>
+                    <textarea id="eventDescription" name="descripcion" rows="4" class="form-input"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventStartDate">Fecha Inicio:</label>
+                        <input type="date" id="eventStartDate" name="fecha_inicio" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventEndDate">Fecha Fin:</label>
+                        <input type="date" id="eventEndDate" name="fecha_fin" required class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="eventLocation">Lugar:</label>
+                    <input type="text" id="eventLocation" name="lugar" required class="form-input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventCapacity">Cupos:</label>
+                        <input type="number" id="eventCapacity" name="cupos" min="1" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventCategory">Categoría:</label>
+                        <select id="eventCategory" name="categoria_id" required class="form-input">
+                            <option value="">Seleccionar categoría</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="saveEventBtn">Guardar Evento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Categoría -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="categoryModalTitle">Crear Categoría</h2>
+                <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <form id="categoryForm" class="modal-body">
+                <div class="form-group">
+                    <label for="categoryName">Nombre:</label>
+                    <input type="text" id="categoryName" name="nombre" required class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="categoryDescription">Descripción:</label>
+                    <textarea id="categoryDescription" name="descripcion" rows="3" class="form-input"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeCategoryModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar Categoría</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+  
+   
+</body>
+</html>

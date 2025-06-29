@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Usuario - EventPro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/user-dashboard.css">
+    <!-- Cargar auth.js primero, luego dashboard -->
+    <script src="js/auth.js"></script>
+    <script src="js/user-dashboard.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/events.js"></script>
+    
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-calendar-alt"></i>
+                <span>EventPro</span>
+            </div>
+            <nav class="nav">
+                <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="#events" class="nav-link" data-section="events">
+                    <i class="fas fa-calendar"></i> Eventos Disponibles
+                </a>
+                <a href="#my-events" class="nav-link" data-section="my-events">
+                    <i class="fas fa-bookmark"></i> Mis Eventos
+                </a>
+                <a href="#history" class="nav-link" data-section="history">
+                    <i class="fas fa-history"></i> Historial
+                </a>
+                <a href="#profile" class="nav-link" data-section="profile">
+                    <i class="fas fa-user"></i> Perfil
+                </a>
+            </nav>
+            <div class="user-menu">
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">Usuario</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="section active">
+            <div class="dashboard-header">
+                <h1>Mi Dashboard</h1>
+                <p class="welcome-text">Bienvenido de vuelta, <span id="welcomeUser">Usuario</span></p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="myActiveEvents">0</h3>
+                        <p>Eventos Activos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalRegistrations">0</h3>
+                        <p>Total Inscripciones</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="availableEvents">0</h3>
+                        <p>Eventos Disponibles</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="content-card">
+                <h2><i class="fas fa-bolt"></i> Acciones Rápidas</h2>
+                <div class="events-grid">
+                    <div class="event-card" onclick="switchSection('events')" style="cursor: pointer;">
+                        <div class="event-header">
+                            <div class="event-title">Explorar Eventos</div>
+                        </div>
+                        <div class="event-body">
+                            <p class="event-description">Descubre nuevos eventos disponibles para inscribirte</p>
+                            <div class="event-actions">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Explorar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="event-card" onclick="switchSection('my-events')" style="cursor: pointer;">
+                        <div class="event-header">
+                            <div class="event-title">Mis Eventos</div>
+                        </div>
+                        <div class="event-body">
+                            <p class="event-description">Revisa tus eventos registrados y próximos</p>
+                            <div class="event-actions">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-bookmark"></i> Ver Mis Eventos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Events -->
+            <div class="content-card">
+                <h2><i class="fas fa-clock"></i> Próximos Eventos</h2>
+                <div id="upcomingEventsContainer">
+                    <!-- Se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="events-section" class="section">
+            <div class="content-card">
+                <h2><i class="fas fa-calendar"></i> Eventos Disponibles</h2>
+                
+                <!-- Search and Filter -->
+                <div class="search-filter">
+                    <input type="text" id="searchEvents" class="search-input" placeholder="Buscar eventos...">
+                    <select id="filterCategory" class="filter-select">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                    <input type="date" id="filterDate" class="search-input">
+                </div>
+
+                <!-- Events Grid -->
+                <div class="events-grid" id="availableEventsGrid">
+                    <!-- Se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- My Events Section -->
+        <section id="my-events-section" class="section">
+            <div class="content-card">
+                <h2><i class="fas fa-bookmark"></i> Mis Eventos</h2>
+                
+                <!-- Tabs -->
+                <div class="my-events-tabs">
+                    <button class="tab-btn active" data-tab="active" onclick="switchMyEventsTab('active')">
+                        Eventos Activos
+                    </button>
+                    <button class="tab-btn" data-tab="upcoming" onclick="switchMyEventsTab('upcoming')">
+                        Próximos Eventos
+                    </button>
+                    <button class="tab-btn" data-tab="past" onclick="switchMyEventsTab('past')">
+                        Eventos Pasados
+                    </button>
+                </div>
+
+                <!-- My Events Content -->
+                <div id="myEventsContainer">
+                    <!-- Se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="history-section" class="section">
+            <div class="content-card">
+                <h2><i class="fas fa-history"></i> Historial de Inscripciones</h2>
+                <div id="historyContainer">
+                    <!-- Se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile-section" class="section">
+            <div class="content-card">
+                <h2><i class="fas fa-user"></i> Mi Perfil</h2>
+                <div class="profile-form">
+                    <div class="form-group">
+                        <label for="profileName">Nombre:</label>
+                        <input type="text" id="profileName" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileEmail">Email:</label>
+                        <input type="email" id="profileEmail" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileRole">Tipo de Usuario:</label>
+                        <input type="text" id="profileRole" class="form-input" value="Cliente" readonly>
+                    </div>
+                    <button class="btn btn-primary" id="saveProfileBtn">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Event Details Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalEventTitle">Detalles del Evento</h2>
+                <button class="modal-close" onclick="closeEventModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalEventContent">
+                <!-- Se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+
+</body>
+</html>

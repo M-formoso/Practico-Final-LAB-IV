@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Eventos</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/login.js"></script>
+    
+</head>
+<body>
+    <header class="hero">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h1>EventManager</h1>
+                </div>
+                <div class="nav-links">
+                    <a href="#features" class="nav-link">Características</a>
+                    <a href="#about" class="nav-link">Acerca de</a>
+                    <button class="btn btn-outline" onclick="window.location.href='login.html'">Iniciar Sesión</button>
+                </div>
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="hero-content">
+            <div class="hero-text">
+                <h2 class="hero-title">Gestiona tus eventos de manera inteligente</h2>
+                <p class="hero-subtitle">Plataforma completa para la organización, inscripción y seguimiento de eventos</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='login.html'">
+                        <i class="fas fa-rocket"></i> Comenzar Ahora
+                    </button>
+                    <button class="btn btn-secondary" onclick="scrollToSection('features')">
+                        <i class="fas fa-info-circle"></i> Saber Más
+                    </button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-card">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>Eventos Organizados</h3>
+                    <p>Gestión completa de eventos</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2 class="section-title">Características Principales</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>Gestión de Usuarios</h3>
+                        <p>Sistema completo de registro, autenticación y roles de usuario</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <h3>Creación de Eventos</h3>
+                        <p>Crea y gestiona eventos con fechas, ubicaciones y cupos limitados</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        <h3>Inscripciones</h3>
+                        <p>Sistema de inscripciones con control de cupos y historial completo</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <h3>Categorías</h3>
+                        <p>Organiza eventos por categorías para mejor navegación</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>Búsqueda Avanzada</h3>
+                        <p>Encuentra eventos por nombre, descripción o categoría</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>Dashboard</h3>
+                        <p>Estadísticas e indicadores de rendimiento en tiempo real</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-text">
+                        <h2>Sobre EventManager</h2>
+                        <p>EventManager es una plataforma integral diseñada para simplificar la gestión de eventos. 
+                        Desde la creación hasta el seguimiento post-evento, nuestra solución ofrece todas las 
+                        herramientas necesarias para organizar eventos exitosos.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> Interfaz intuitiva y fácil de usar</li>
+                            <li><i class="fas fa-check"></i> Seguridad con autenticación JWT</li>
+                            <li><i class="fas fa-check"></i> Gestión automática de cupos</li>
+                            <li><i class="fas fa-check"></i> Reportes y estadísticas detalladas</li>
+                        </ul>
+                    </div>
+                    <div class="about-visual">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number">100+</div>
+                                <div class="stat-label">Eventos Creados</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">500+</div>
+                                <div class="stat-label">Usuarios Registrados</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">98%</div>
+                                <div class="stat-label">Satisfacción</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>EventManager</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Términos</a>
+                    <a href="#" class="footer-link">Privacidad</a>
+                    <a href="#" class="footer-link">Contacto</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 EventManager. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Función para scroll suave
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Toggle del menú móvil
+        document.querySelector('.mobile-menu-toggle').addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('active');
+        });
+
+        // Efecto de scroll en navbar
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>
