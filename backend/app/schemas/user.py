@@ -42,10 +42,13 @@ class UserInscriptionResponse(BaseModel):
 class UserWithInscriptions(UserResponse):
     inscripciones: List[UserInscriptionResponse] = []
 
-# Esquemas para autenticación
+# Esquemas para autenticación - CORREGIDO
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user_id: int           # ← AGREGADO
+    email: str             # ← AGREGADO  
+    role: str              # ← AGREGADO
 
 class TokenData(BaseModel):
     email: Optional[str] = None

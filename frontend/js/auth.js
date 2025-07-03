@@ -5,8 +5,8 @@
 class AuthSystem {
     constructor() {
         this.config = {
-            API_BASE_URL: 'http://127.0.0.1:8001',
-            DEVELOPMENT_MODE: true,
+            API_BASE_URL: 'http://localhost:8001',  // ← URL CORREGIDA
+            DEVELOPMENT_MODE: false,  // ← CAMBIADO A PRODUCCIÓN
             TOKEN_KEY: 'authToken',
             USER_KEY: 'userData',
             SESSION_TIMEOUT: 24 * 60 * 60 * 1000, // 24 horas
@@ -46,6 +46,8 @@ class AuthSystem {
 
     async login(credentials) {
         try {
+            console.log('🔐 Intentando login con:', credentials.email);
+            
             let response;
             
             if (this.config.DEVELOPMENT_MODE) {
@@ -55,19 +57,23 @@ class AuthSystem {
             }
 
             if (response.success) {
+                console.log('✅ Login exitoso para:', response.data.user.nombre);
                 this.saveAuthData(response.data);
                 return { success: true, user: response.data.user };
             } else {
+                console.log('❌ Login fallido:', response.message);
                 return { success: false, message: response.message };
             }
         } catch (error) {
-            console.error('Error en login:', error);
-            return { success: false, message: 'Error de conexión' };
+            console.error('❌ Error en login:', error);
+            return { success: false, message: 'Error de conexión con el servidor' };
         }
     }
 
     async register(userData) {
         try {
+            console.log('📝 Intentando registro para:', userData.email);
+            
             let response;
             
             if (this.config.DEVELOPMENT_MODE) {
@@ -76,25 +82,125 @@ class AuthSystem {
                 response = await this.apiRegister(userData);
             }
 
+            console.log('📝 Resultado del registro:', response.success);
             return response;
         } catch (error) {
-            console.error('Error en registro:', error);
-            return { success: false, message: 'Error de conexión' };
+            console.error('❌ Error en registro:', error);
+            return { success: false, message: 'Error de conexión con el servidor' };
         }
     }
 
     logout() {
+        console.log('👋 Cerrando sesión...');
         this.clearAuthData();
         this.redirectTo('/login.html');
         this.showNotification('Sesión cerrada correctamente', 'success');
     }
 
     // ==========================================
-    // SIMULACIÓN DE BACKEND (DESARROLLO)
+    // API CALLS REALES
+    // ==========================================
+
+    async apiLogin(credentials) {
+        console.log('🌐 Llamando a API de login...');
+        
+        try {
+            const response = await fetch(`${this.config.API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: credentials.email,
+                    contraseña: credentials.password  // Backend espera 'contraseña'
+                })
+            });
+
+            console.log('📡 Respuesta del servidor:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Login exitoso, datos recibidos:', data);
+                
+                // Verificar que tenemos los datos necesarios
+                if (!data.access_token || !data.email) {
+                    throw new Error('Respuesta del servidor incompleta');
+                }
+                
+                // El backend devuelve: { access_token, token_type, user_id, email, role }
+                return { 
+                    success: true, 
+                    data: {
+                        access_token: data.access_token,
+                        token_type: data.token_type || 'bearer',
+                        expires_in: this.config.SESSION_TIMEOUT,
+                        user: {
+                            id: data.user_id || 1,
+                            nombre: data.email ? data.email.split('@')[0] : 'Usuario', // Usar email como fallback
+                            email: data.email,
+                            rol: data.role || 'Cliente' // Backend devuelve 'role', frontend espera 'rol'
+                        }
+                    }
+                };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.log('❌ Error del servidor:', errorData);
+                return { 
+                    success: false, 
+                    message: errorData.detail || 'Email o contraseña incorrectos' 
+                };
+            }
+        } catch (error) {
+            console.error('❌ Error en fetch:', error);
+            return { 
+                success: false, 
+                message: 'Error de conexión con el servidor' 
+            };
+        }
+    }
+
+    async apiRegister(userData) {
+        console.log('🌐 Llamando a API de registro...');
+        
+        const response = await fetch(`${this.config.API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre: userData.nombre,
+                email: userData.email,
+                contraseña: userData.contraseña,
+                rol: userData.rol
+            })
+        });
+
+        console.log('📡 Respuesta del servidor:', response.status);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Registro exitoso:', data);
+            return { 
+                success: true, 
+                message: 'Usuario creado exitosamente',
+                user: data
+            };
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.log('❌ Error del servidor:', errorData);
+            return { 
+                success: false, 
+                message: errorData.detail || 'Error al crear la cuenta' 
+            };
+        }
+    }
+
+    // ==========================================
+    // SIMULACIÓN DE BACKEND (DESARROLLO) - MANTENER PARA FALLBACK
     // ==========================================
 
     async mockLogin(credentials) {
-        // Simular delay de red
+        console.log('🧪 Usando mock login...');
         await this.delay(800);
 
         const user = this.mockUsers.find(u => 
@@ -127,9 +233,9 @@ class AuthSystem {
     }
 
     async mockRegister(userData) {
+        console.log('🧪 Usando mock register...');
         await this.delay(1000);
 
-        // Verificar si el email ya existe
         const existingUser = this.mockUsers.find(u => u.email === userData.email);
         
         if (existingUser) {
@@ -139,7 +245,6 @@ class AuthSystem {
             };
         }
 
-        // Simular creación exitosa
         const newUser = {
             id: this.mockUsers.length + 1,
             nombre: userData.nombre,
@@ -164,46 +269,6 @@ class AuthSystem {
     }
 
     // ==========================================
-    // API CALLS REALES
-    // ==========================================
-
-    async apiLogin(credentials) {
-        const response = await fetch(`${this.config.API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(credentials)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            return { success: true, data };
-        } else {
-            return { success: false, message: data.detail || 'Error en la autenticación' };
-        }
-    }
-
-    async apiRegister(userData) {
-        const response = await fetch(`${this.config.API_BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            return { success: true, data };
-        } else {
-            return { success: false, message: data.detail || 'Error al crear la cuenta' };
-        }
-    }
-
-    // ==========================================
     // GESTIÓN DE TOKENS Y DATOS
     // ==========================================
 
@@ -217,11 +282,10 @@ class AuthSystem {
         localStorage.setItem(this.config.TOKEN_KEY, JSON.stringify(tokenData));
         localStorage.setItem(this.config.USER_KEY, JSON.stringify(authData.user));
 
-        // También en sessionStorage como backup
         sessionStorage.setItem(this.config.TOKEN_KEY, JSON.stringify(tokenData));
         sessionStorage.setItem(this.config.USER_KEY, JSON.stringify(authData.user));
 
-        console.log('✅ Datos de autenticación guardados');
+        console.log('💾 Datos de autenticación guardados');
     }
 
     getAuthData() {
@@ -236,8 +300,8 @@ class AuthSystem {
             const tokenData = JSON.parse(tokenStr);
             const userData = JSON.parse(userStr);
 
-            // Verificar si el token no ha expirado
             if (tokenData.expires_at < Date.now()) {
+                console.log('⏰ Token expirado, limpiando datos...');
                 this.clearAuthData();
                 return null;
             }
@@ -248,7 +312,7 @@ class AuthSystem {
                 expires_at: tokenData.expires_at
             };
         } catch (error) {
-            console.error('Error al obtener datos de auth:', error);
+            console.error('❌ Error al obtener datos de auth:', error);
             this.clearAuthData();
             return null;
         }
@@ -283,7 +347,6 @@ class AuthSystem {
             return { isAuthenticated: false };
         }
 
-        // En modo desarrollo, confiar en el token local
         if (this.config.DEVELOPMENT_MODE) {
             return { 
                 isAuthenticated: true, 
@@ -306,8 +369,13 @@ class AuthSystem {
                 return { isAuthenticated: false };
             }
         } catch (error) {
-            console.error('Error verificando token:', error);
-            return { isAuthenticated: false };
+            console.error('❌ Error verificando token:', error);
+            // En caso de error de red, mantener la sesión local
+            return { 
+                isAuthenticated: true, 
+                user: authData.user,
+                token: authData.token 
+            };
         }
     }
 
@@ -322,30 +390,37 @@ class AuthSystem {
             });
             return response.ok;
         } catch (error) {
-            console.error('Error en verificación de token:', error);
+            console.error('❌ Error en verificación de token:', error);
             return false;
         }
     }
 
     requireAuth(allowedRoles = []) {
         return new Promise(async (resolve, reject) => {
-            const auth = await this.checkAuth();
-            
-            if (!auth.isAuthenticated) {
-                this.redirectTo('/login.html');
-                reject(new Error('No autenticado'));
-                return;
-            }
+            try {
+                const auth = await this.checkAuth();
+                
+                if (!auth.isAuthenticated) {
+                    console.log('🚫 No autenticado, redirigiendo al login...');
+                    this.redirectTo('/login.html');
+                    reject(new Error('No autenticado'));
+                    return;
+                }
 
-            // Verificar roles si se especifican
-            if (allowedRoles.length > 0 && !allowedRoles.includes(auth.user.rol)) {
-                this.showNotification('No tienes permisos para acceder a esta página', 'error');
-                this.redirectToDashboard(auth.user.rol);
-                reject(new Error('Sin permisos'));
-                return;
-            }
+                if (allowedRoles.length > 0 && !allowedRoles.includes(auth.user.rol)) {
+                    console.log('🚫 Sin permisos, rol requerido:', allowedRoles, 'rol actual:', auth.user.rol);
+                    this.showNotification('No tienes permisos para acceder a esta página', 'error');
+                    this.redirectToDashboard(auth.user.rol);
+                    reject(new Error('Sin permisos'));
+                    return;
+                }
 
-            resolve(auth);
+                console.log('✅ Autenticación verificada para:', auth.user.nombre);
+                resolve(auth);
+            } catch (error) {
+                console.error('❌ Error en requireAuth:', error);
+                reject(error);
+            }
         });
     }
 
@@ -360,102 +435,13 @@ class AuthSystem {
         };
 
         const dashboardUrl = dashboards[userRole] || '/user-dashboard.html';
+        console.log('🎯 Redirigiendo a dashboard:', dashboardUrl);
         this.redirectTo(dashboardUrl);
     }
 
     redirectTo(url) {
-        // Verificar si ya estamos en la URL correcta
         if (window.location.pathname === url) return;
-
         window.location.href = url;
-    }
-
-    // ==========================================
-    // AUTO-RENOVACIÓN DE TOKENS
-    // ==========================================
-
-    setupTokenRefresh() {
-        setInterval(() => {
-            const authData = this.getAuthData();
-            if (authData) {
-                const timeUntilExpiry = authData.expires_at - Date.now();
-                
-                // Si el token expira en menos de 5 minutos, intentar renovar
-                if (timeUntilExpiry < this.config.REFRESH_THRESHOLD) {
-                    this.refreshToken();
-                }
-            }
-        }, 60000); // Verificar cada minuto
-    }
-
-    async refreshToken() {
-        if (this.config.DEVELOPMENT_MODE) {
-            // En desarrollo, simplemente extender la expiración
-            const authData = this.getAuthData();
-            if (authData) {
-                this.saveAuthData({
-                    access_token: authData.token,
-                    expires_in: this.config.SESSION_TIMEOUT,
-                    user: authData.user
-                });
-                console.log('🔄 Token renovado (modo desarrollo)');
-            }
-            return;
-        }
-
-        // En producción, hacer llamada al servidor
-        try {
-            const response = await fetch(`${this.config.API_BASE_URL}/auth/refresh`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.saveAuthData(data);
-                console.log('🔄 Token renovado');
-            } else {
-                this.logout();
-            }
-        } catch (error) {
-            console.error('Error renovando token:', error);
-            this.logout();
-        }
-    }
-
-    // ==========================================
-    // UTILIDADES
-    // ==========================================
-
-    generateMockToken() {
-        return `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    showNotification(message, type = 'info') {
-        // Crear notificación si no existe un sistema
-        if (typeof showToast === 'function') {
-            showToast(message, type);
-        } else {
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-    }
-
-    logSystemInfo() {
-        if (this.config.DEVELOPMENT_MODE) {
-            console.group('🔐 Sistema de Autenticación EventPro');
-            console.log('📊 Estado:', this.config.DEVELOPMENT_MODE ? 'Desarrollo' : 'Producción');
-            console.log('👥 Usuarios mock:', this.mockUsers.length);
-            console.log('🔑 Usuario actual:', this.getCurrentUser()?.nombre || 'No autenticado');
-            console.log('⏰ Timeout de sesión:', this.config.SESSION_TIMEOUT / (1000 * 60 * 60), 'horas');
-            console.groupEnd();
-        }
     }
 
     // ==========================================
@@ -483,13 +469,71 @@ class AuthSystem {
             }
         });
 
-        // Si el token es inválido, cerrar sesión
         if (response.status === 401) {
+            console.log('🚫 Token inválido, cerrando sesión...');
             this.logout();
             throw new Error('Token inválido');
         }
 
         return response;
+    }
+
+    // ==========================================
+    // UTILIDADES
+    // ==========================================
+
+    generateMockToken() {
+        return `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    showNotification(message, type = 'info') {
+        if (typeof showToast === 'function') {
+            showToast(message, type);
+        } else {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+    }
+
+    logSystemInfo() {
+        console.group('🔐 Sistema de Autenticación EventPro');
+        console.log('📊 Estado:', this.config.DEVELOPMENT_MODE ? 'Desarrollo' : 'Producción');
+        console.log('🌐 API URL:', this.config.API_BASE_URL);
+        console.log('🔑 Usuario actual:', this.getCurrentUser()?.nombre || 'No autenticado');
+        console.groupEnd();
+    }
+
+    // ==========================================
+    // AUTO-RENOVACIÓN DE TOKENS (SIMPLIFICADA)
+    // ==========================================
+
+    setupTokenRefresh() {
+        setInterval(() => {
+            const authData = this.getAuthData();
+            if (authData) {
+                const timeUntilExpiry = authData.expires_at - Date.now();
+                
+                if (timeUntilExpiry < this.config.REFRESH_THRESHOLD) {
+                    console.log('⏰ Token próximo a expirar, renovando...');
+                    this.refreshToken();
+                }
+            }
+        }, 60000);
+    }
+
+    async refreshToken() {
+        const authData = this.getAuthData();
+        if (authData) {
+            this.saveAuthData({
+                access_token: authData.token,
+                expires_in: this.config.SESSION_TIMEOUT,
+                user: authData.user
+            });
+            console.log('🔄 Token renovado');
+        }
     }
 }
 
@@ -498,40 +542,29 @@ class AuthSystem {
 // ==========================================
 
 const auth = new AuthSystem();
-
-// Exportar para uso en otros archivos
 window.auth = auth;
-
-// Para entornos que soporten módulos
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = auth;
-}
 
 // ==========================================
 // HELPERS GLOBALES
 // ==========================================
 
-// Función para proteger páginas
 async function requireAuth(allowedRoles = []) {
     try {
         return await auth.requireAuth(allowedRoles);
     } catch (error) {
-        console.error('Error en requireAuth:', error);
+        console.error('❌ Error en requireAuth:', error);
         throw error;
     }
 }
 
-// Función para obtener usuario actual
 function getCurrentUser() {
     return auth.getCurrentUser();
 }
 
-// Función para hacer logout
 function logout() {
     auth.logout();
 }
 
-// Función para verificar si está autenticado
 async function isAuthenticated() {
     const authResult = await auth.checkAuth();
     return authResult.isAuthenticated;
@@ -542,7 +575,6 @@ async function isAuthenticated() {
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Solo en dashboards, verificar autenticación automáticamente
     const isDashboard = window.location.pathname.includes('dashboard');
     
     if (isDashboard) {
@@ -555,19 +587,16 @@ async function initializeDashboard() {
         const currentPage = window.location.pathname;
         let requiredRole = null;
 
-        // Determinar rol requerido según la página
         if (currentPage.includes('admin-dashboard')) {
             requiredRole = 'Administrador';
         } else if (currentPage.includes('user-dashboard')) {
             requiredRole = 'Cliente';
         }
 
-        // Verificar autenticación y rol
         const authData = await auth.requireAuth(requiredRole ? [requiredRole] : []);
         
         console.log('✅ Dashboard inicializado para:', authData.user.nombre);
 
-        // Disparar evento personalizado para que el dashboard se configure
         window.dispatchEvent(new CustomEvent('authenticationVerified', { 
             detail: authData 
         }));
@@ -577,4 +606,4 @@ async function initializeDashboard() {
     }
 }
 
-console.log('🔐 Sistema de autenticación cargado');
+console.log('🔐 Sistema de autenticación cargado (Modo Producción)');

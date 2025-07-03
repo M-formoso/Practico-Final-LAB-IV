@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import create_tables, engine
 from app.models import Base
+from app.database import engine  # ← IMPORTACIÓN CORREGIDA (sin utils)
 import os
 from dotenv import load_dotenv
 
@@ -18,12 +18,20 @@ app = FastAPI(
     description="API REST para gestión de eventos con autenticación JWT"
 )
 
-# Configurar CORS
+# Configurar CORS - PUERTO 8001
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500/admin-dashboard.html"],  # En producción, especifica los dominios permitidos
+    allow_origins=[
+        "http://localhost:3000",       # Frontend Nginx en Docker
+        "http://127.0.0.1:3000",      # Frontend Nginx en Docker
+        "http://localhost",            # Frontend sin puerto
+        "http://127.0.0.1",          # Frontend sin puerto
+        "http://localhost:8001",       # Backend mismo
+        "http://127.0.0.1:8001",      # Backend mismo
+        "*"                           # SOLO para desarrollo
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

@@ -5,7 +5,7 @@
 class ApiManager {
     constructor() {
         this.config = {
-            BASE_URL: 'http://127.0.0.1:8001',
+            BASE_URL: 'http://localhost:8001',  // ← PUERTO CORREGIDO
             DEVELOPMENT_MODE: false,
             TIMEOUT: 10000,
             RETRY_ATTEMPTS: 3,
@@ -35,7 +35,11 @@ class ApiManager {
             ADMIN_EVENTS: '/admin/events',
             ADMIN_USERS: '/admin/users',
             ADMIN_STATS: '/admin/stats',
-            ADMIN_REPORTS: '/admin/reports'
+            ADMIN_REPORTS: '/admin/reports',
+
+            // Dashboard - AGREGADO
+            DASHBOARD: '/dashboard',
+            DASHBOARD_STATS: '/dashboard/stats'
         };
 
         this.init();
@@ -43,7 +47,7 @@ class ApiManager {
 
     init() {
         this.setupInterceptors();
-        console.log('🌐 API Manager inicializado');
+        console.log('🌐 API Manager inicializado con URL:', this.config.BASE_URL);
     }
 
     // ==========================================
@@ -205,7 +209,7 @@ class ApiManager {
         }
 
         if (!response.ok) {
-            throw new ApiError(
+            throw new EventProApiError(
                 result.data?.message || result.statusText || 'Error en la petición',
                 result.status,
                 result.data
@@ -220,18 +224,18 @@ class ApiManager {
 
         // Manejar diferentes tipos de errores
         if (error.name === 'AbortError') {
-            throw new ApiError('Timeout: La petición tardó demasiado', 408);
+            throw new EventProApiError('Timeout: La petición tardó demasiado', 408);
         }
 
-        if (error instanceof ApiError) {
+        if (error instanceof EventProApiError) {
             throw error;
         }
 
         if (error.message.includes('Failed to fetch')) {
-            throw new ApiError('Error de conexión: Verifica tu conexión a internet', 0);
+            throw new EventProApiError('Error de conexión: Verifica tu conexión a internet', 0);
         }
 
-        throw new ApiError(error.message || 'Error desconocido', 500);
+        throw new EventProApiError(error.message || 'Error desconocido', 500);
     }
 
     // ==========================================
@@ -244,6 +248,11 @@ class ApiManager {
 
         // Mock responses para diferentes endpoints
         const mockResponses = {
+            'GET /dashboard/stats': {
+                ok: true,
+                status: 200,
+                data: this.getMockDashboardStats()
+            },
             'GET /events': {
                 ok: true,
                 status: 200,
@@ -267,6 +276,18 @@ class ApiManager {
         };
 
         return mockResponses[mockKey] || null;
+    }
+
+    getMockDashboardStats() {
+        return {
+            total_events: 15,
+            active_inscriptions: 127,
+            average_rating: 8.5,
+            popular_event: {
+                title: "Conferencia Tech 2024",
+                id: 1
+            }
+        };
     }
 
     getMockEvents() {
@@ -337,10 +358,23 @@ class ApiManager {
     // MÉTODOS DE CONVENIENCIA
     // ==========================================
 
+    // Dashboard - CORREGIDO
+    async getDashboardStats() {
+        try {
+            console.log('🌐 Llamando a /dashboard/stats...');
+            const response = await this.get('/dashboard/stats');
+            console.log('✅ Respuesta dashboard stats:', response);
+            return response;
+        } catch (error) {
+            console.error('❌ Error en getDashboardStats:', error);
+            throw error;
+        }
+    }
+
     // Eventos
     async getEvents(filters = {}) {
         const params = new URLSearchParams(filters).toString();
-        const endpoint = params ? `${this.endpoints.EVENTS}?${params}` : this.endpoints.EVENTS;
+        const endpoint = params ? `/events/?${params}` : '/events/';  // Con barra al final
         return await this.get(endpoint);
     }
 
@@ -432,13 +466,13 @@ class ApiManager {
 }
 
 // ==========================================
-// CLASE DE ERROR PERSONALIZADA
+// CLASE DE ERROR PERSONALIZADA - RENOMBRADA
 // ==========================================
 
-class ApiError extends Error {
+class EventProApiError extends Error {
     constructor(message, status = 500, data = null) {
         super(message);
-        this.name = 'ApiError';
+        this.name = 'EventProApiError';
         this.status = status;
         this.data = data;
     }
@@ -461,11 +495,11 @@ const api = new ApiManager();
 
 // Exportar para uso en otros archivos
 window.api = api;
-window.ApiError = ApiError;
+window.EventProApiError = EventProApiError;
 
 // Para entornos que soporten módulos
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { api, ApiError };
+    module.exports = { api, EventProApiError };
 }
 
 // ==========================================

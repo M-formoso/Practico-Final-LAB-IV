@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import UserCreate, UserResponse, Token, UserLogin
 from app.services.auth_service import AuthService
+from app.auth import get_current_user
+from app.models import User
 
 router = APIRouter()
 
@@ -33,8 +35,15 @@ async def login_with_form(
     
     return AuthService.login_user(db, user_credentials)
 
-@router.post("/verify-token")
-async def verify_token_endpoint():
+@router.get("/verify")
+async def verify_token_endpoint(current_user: User = Depends(get_current_user)):
     """Verificar si el token actual es válido"""
-    # Si llegamos aquí (después de pasar por el middleware de auth), el token es válido
-    return {"message": "Token válido", "status": "valid"}
+    return {
+        "message": "Token válido", 
+        "status": "valid",
+        "user": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "role": current_user.rol.value
+        }
+    }
