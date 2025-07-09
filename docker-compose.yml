@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eventpro-backend
+    ports:
+      - "8001:8000"  # ← PUERTO CAMBIADO (externo:interno)
+    volumes:
+      # Montar el código para desarrollo en vivo
+      - ./backend:/app
+      # Persistir la base de datos
+      - ./backend/eventos.db:/app/eventos.db
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///./eventos.db
+      - SECRET_KEY=${SECRET_KEY:-tu_clave_secreta_super_segura}
+      - DEBUG=${DEBUG:-True}
+      - CORS_ORIGINS=["http://localhost", "http://localhost:3000", "http://127.0.0.1", "http://127.0.0.1:3000"]
+    networks:
+      - eventpro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend con Nginx
+  frontend:
+    image: nginx:latest
+    container_name: eventpro-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - eventpro-network
+    restart: unless-stopped
+
+  # Servicio de desarrollo (opcional)
+  adminer:
+    image: adminer
+    container_name: eventpro-adminer
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=sqlite
+    networks:
+      - eventpro-network
+    profiles:
+      - dev
+
+volumes:
+  sqlite_data:
+    driver: local
+
+networks:
+  eventpro-network:
+    driver: bridge
